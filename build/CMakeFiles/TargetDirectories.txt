@@ -1,8 +1,0 @@
-/home/monell/code/file_transfer/build/CMakeFiles/rebuild_cache.dir
-/home/monell/code/file_transfer/build/CMakeFiles/edit_cache.dir
-/home/monell/code/file_transfer/build/server/CMakeFiles/rebuild_cache.dir
-/home/monell/code/file_transfer/build/server/CMakeFiles/server.dir
-/home/monell/code/file_transfer/build/server/CMakeFiles/edit_cache.dir
-/home/monell/code/file_transfer/build/client/CMakeFiles/rebuild_cache.dir
-/home/monell/code/file_transfer/build/client/CMakeFiles/client.dir
-/home/monell/code/file_transfer/build/client/CMakeFiles/edit_cache.dir
