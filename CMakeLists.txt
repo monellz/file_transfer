@@ -6,7 +6,8 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++14")
 
 
 include_directories(${PROJECT_SOURCE_DIR}/third_party/include)
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/tools)
 
+add_subdirectory(tools)
 add_subdirectory(server)
 add_subdirectory(client)

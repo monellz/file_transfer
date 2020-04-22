@@ -1,10 +1,18 @@
-#include <iostream>
-#include "util.h"
+#include "server.h"
 
-int main() {
+
+
+void server_init() {
+    Mkdir("data");
+
+    signal(SIGCHLD, sig_worker);
+
     logger_init("master");
-    logger->info("server start");
+    logger->info("server init");
+}
 
+void server_main() {
+    logger->info("server start");
     int listenfd, connfd;
     pid_t worker_pid;
     sockaddr_in_t server_addr, client_addr;
@@ -17,8 +25,6 @@ int main() {
     server_addr.sin_port = htons(SERVER_PORT);
     Bind(listenfd, (sockaddr_t*)&server_addr, sizeof(server_addr));
 
-    logger->info("socket created and binded");
-
     Listen(listenfd, 1024);
 
     while (true) {
@@ -27,33 +33,23 @@ int main() {
             if (errno == EINTR) continue;
             else {
                 logger->error("accept error");
+                exit(0);
             }
         }
-
         if ((worker_pid = Fork()) == 0) {
-            char buff[1000];
-            //worker
-            logger_init("worker");
-            logger->info("worker start, peer is {}:{}", Inet_ntop(AF_INET, &client_addr.sin_addr, buff, sizeof(buff)), ntohs(client_addr.sin_port));
-
-            logger->info("dead");
+            worker_init();
+            worker_main(connfd, &client_addr, &client_len);
             exit(0);
         }
         //master
-        logger->info("give connection to worker (pid){}", worker_pid);
+        logger->info("assign worker {} to a new connection", worker_pid);
     }
+}
 
-    /*
-    int pid = fork();
-    if (pid > 0) {
-        logger->info("hello I am father, child is {}", pid);
-        logger->warn("warn hello I am father, child is {}", pid);
-        waitpid(pid, NULL, 0);
-    } else {
-        worker_logger_init();
-        logger->info("hello I am child");
-        logger->warn("warn hello I am child");
+void sig_worker(int signo) {
+    pid_t pid;
+    int stat;
+    while ((pid = waitpid(-1, &stat, WNOHANG)) > 0) {
+        logger->warn("worker {} terminated", pid);
     }
-    */
-    return 0;
 }

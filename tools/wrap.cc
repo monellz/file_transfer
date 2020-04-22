@@ -1,12 +1,5 @@
-#ifndef __WRAP_H
-#define __WRAP_H
+#include "wrap.h"
 
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include "logger.h"
-
-typedef struct sockaddr_in sockaddr_in_t;
-typedef struct sockaddr sockaddr_t;
 
 void bzero(void* dst, size_t len) {
     memset(dst, 0, len);
@@ -68,4 +61,15 @@ const char* Inet_ntop(int family, const void *addrptr, char *strptr, size_t len)
     return ptr;
 }
 
-#endif
+
+void Mkdir(const char* path) {
+    if (access(path, F_OK) == 0) {
+        logger->info("{} directory exists", path);
+    } else {
+        if (mkdir(path, 0755) != 0) {
+            logger->error("mkdir error");
+            exit(0);
+        }
+    }
+}
+
