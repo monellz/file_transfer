@@ -3,8 +3,6 @@
 #include "util.h"
 #include "worker.h"
 
-const char data_dir[] = "data";
-
 void server_init();
 void server_main();
 

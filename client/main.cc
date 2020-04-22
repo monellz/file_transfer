@@ -19,5 +19,12 @@ int main(int argc, char **argv) {
 
     Connect(sockfd, (sockaddr_t*)&server_addr, sizeof(server_addr));
 
+
+    char buff[1 + MAX_FILE_NAME_BYTE + 1];
+    //snprintf(buff, 1 + MAX_FILE_NAME_BYTE, "hello world");
+    buff[0] = Download;
+    snprintf(buff + 1, MAX_FILE_NAME_BYTE, "file name");
+    writen(sockfd, buff, sizeof(buff));
+
     return 0;
 }

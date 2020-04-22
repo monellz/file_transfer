@@ -24,6 +24,13 @@ void Listen(int fd, int backlog);
 
 void Connect(int fd, const struct sockaddr *sa, socklen_t salen);
 
+void Close(int fd);
+
+ssize_t readn(int fd, void *vptr, size_t n);
+
+ssize_t writen(int fd, const void *vptr, size_t n);
+
+
 pid_t Fork(void);
 
 void Inet_pton(int family, const char* strptr, void *addrptr);
@@ -33,5 +40,7 @@ const char* Inet_ntop(int family, const void *addrptr, char *strptr, size_t len)
 
 //file
 void Mkdir(const char* path);
+
+bool Exist(const char* file_path);
 
 #endif

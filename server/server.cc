@@ -37,11 +37,13 @@ void server_main() {
             }
         }
         if ((worker_pid = Fork()) == 0) {
+            Close(listenfd);
             worker_init();
             worker_main(connfd, &client_addr, &client_len);
             exit(0);
         }
         //master
+        Close(connfd);
         logger->info("assign worker {} to a new connection", worker_pid);
     }
 }
