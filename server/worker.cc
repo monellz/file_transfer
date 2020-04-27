@@ -20,7 +20,6 @@ void worker_main(int connfd, sockaddr_in_t* peer_addr, socklen_t* peer_len) {
     } else if (buff[0] == Download) {
         logger->info("request is Download, filename is {}", buff + 1);
         download_file(connfd, buff + 1);
-
     } else {
         logger->error("unknown request type");
     }
@@ -33,9 +32,45 @@ void upload_file(int connfd, const char *file_name) {
     char buff[PAGE_SIZE] = "";
     char file_path[PAGE_SIZE];
     snprintf(file_path, sizeof(file_path), "%s/%s", data_dir, file_name);
-    if (!Exist(file_path)) {
+    if (Exist(file_path)) {
         logger->warn("{} has exist, overwite", file_name);
+        snprintf(buff, sizeof(buff), "%c0\n\n", Overwrite);
+    } else {
+        snprintf(buff, sizeof(buff), "%c0\n\n", Succ);
     }
+    writen(connfd, buff, sizeof(buff));
+    
+    long int file_len;
+    long int nread;
+    char r;
+
+    bzero(buff, sizeof(buff));
+    nread = readn(connfd, buff, sizeof(buff));
+    sscanf(buff, "%c%ld", &r, &file_len);
+    logger->info("{} len: {}", file_name, file_len);
+
+    //send acc to client
+    bzero(buff, sizeof(buff));
+    writen(connfd, buff, sizeof(buff));
+    logger->info("acc sended");
+
+
+    //receive file
+    int fd = open(file_path, O_WRONLY | O_CREAT, 0644);
+    bzero(buff, sizeof(buff));
+
+    long int left = file_len;
+    while (left > 0) {
+        if ((nread = readn(connfd, buff, sizeof(buff))) < 0) {
+            logger->error("socket read error");
+            exit(0);
+        } else if (nread == 0) break;
+
+        left -= nread;
+        writen(fd, buff, nread);
+    }
+
+    close(fd);
 }
 
 void download_file(int connfd, const char *file_name) {

@@ -1,12 +1,36 @@
 #include "util.h"
 
+void send_file(int sockfd, const char* file_name, long int file_len) {
+    char buff[PAGE_SIZE] = "";
+    long int left = file_len;
+    long int nread;
+    int fd = open(file_name, O_RDONLY, 0644);
+    if (fd < 0) {
+        logger->error("open file error");
+        exit(0);
+    }
+
+    while (left > 0) {
+        bzero(buff, sizeof(PAGE_SIZE));
+        if ((nread = readn(fd, buff, PAGE_SIZE)) < 0) {
+            logger->error("read file error");
+            exit(0);
+        } else if (nread == 0) break;
+
+        left -= nread;
+        writen(sockfd, buff, nread);
+        logger->info("uploading {}...{}/{}", file_name, file_len - left, file_len);
+    }
+    close(fd);
+    logger->info("{} uploaded", file_name);
+}
 
 void receive_file(int sockfd, const char* file_name, long int file_len) {
     char buff[PAGE_SIZE] = "";
     long int left;
     long int nread;
 
-    int fd = open(file_name, O_APPEND | O_WRONLY | O_CREAT, 0644);
+    int fd = open(file_name, O_WRONLY | O_CREAT, 0644);
     bzero(buff, sizeof(buff));
 
     left = file_len;
@@ -21,7 +45,9 @@ void receive_file(int sockfd, const char* file_name, long int file_len) {
         left -= nread;
         //write
         writen(fd, buff, nread);
-    } close(fd); 
+    }
+    
+    close(fd); 
     logger->info("{} downloaded", file_name);
 }
 
@@ -36,6 +62,7 @@ int main(int argc, char **argv) {
     }
 
     char* file_name = argv[3];
+    char type = atoi(argv[2]);
 
     sockfd = Socket(AF_INET, SOCK_STREAM, 0);
     bzero(&server_addr, sizeof(server_addr));
@@ -51,7 +78,7 @@ int main(int argc, char **argv) {
     int buff_len = 0;
 
 
-    buff[0] = atoi(argv[2]);
+    buff[0] = type;
     snprintf(buff + 1, PAGE_SIZE - 1, "%s", file_name);
     writen(sockfd, buff, sizeof(buff));
 
@@ -62,14 +89,33 @@ int main(int argc, char **argv) {
     sscanf(buff, "%c%ld", &r, &file_len);
 
     switch (r) {
+        case Overwrite:
+            logger->warn("{} exits, overwrite", file_name);
         case Succ:
-            logger->info("{} len: {}", file_name, file_len);
-            //acc
-            //TODO: send 1 byte?
-            bzero(buff, sizeof(buff));            
-            writen(sockfd, buff, PAGE_SIZE);
-            logger->info("acc sended");
-            receive_file(sockfd, file_name, file_len);
+            if (type == Download) {
+                logger->info("{} len: {}", file_name, file_len);
+                //acc
+                //TODO: send 1 byte?
+                bzero(buff, sizeof(buff));            
+                writen(sockfd, buff, sizeof(buff));
+                logger->info("acc sended");
+                receive_file(sockfd, file_name, file_len);
+            } else {
+                //Upload
+                file_len = File_size(file_name);
+                snprintf(buff, sizeof(buff), "%ld\n\n", file_len);
+                logger->info("{} len: {}", file_name, file_len);
+                writen(sockfd, buff, sizeof(buff));
+
+                //receive acc
+                if (readn(sockfd, buff, sizeof(buff)) < 0) {
+                    logger->error("server acc error");
+                    exit(0);
+                }
+
+                //send file to server
+                send_file(sockfd, file_name, file_len);
+            }
             break;
         case NotExist:
             logger->warn("{} not exist", file_name);
