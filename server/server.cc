@@ -1,14 +1,11 @@
 #include "server.h"
 
-
-
 void server_init() {
-    Mkdir("data");
-
-    signal(SIGCHLD, sig_worker);
-
     logger_init("master");
     logger->info("server init");
+
+    Mkdir("data");
+    signal(SIGCHLD, sig_worker);
 }
 
 void server_main() {

@@ -5,6 +5,11 @@ void bzero(void* dst, size_t len) {
     memset(dst, 0, len);
 }
 
+void bone(void* dst, size_t len) {
+    memset(dst, -1, len);
+}
+
+
 int Socket(int family, int type, int protocol) {
     int n;
     if ((n = socket(family, type, protocol)) < 0) {
@@ -117,4 +122,14 @@ void Mkdir(const char* path) {
 
 bool Exist(const char* file_path) {
     return access(file_path, F_OK) == 0;
+}
+
+
+off_t File_size(const char* file_path) {
+    struct stat64 buf;
+    if (stat64(file_path, &buf) < 0) {
+        logger->error("cannot open {}", file_path);
+        exit(0);
+    }
+    return (off_t)buf.st_size;
 }

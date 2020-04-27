@@ -10,10 +10,20 @@
 
 #include "logger.h"
 
+#ifndef _LARGEFILE64_SOURCE
+#define _LARGEFILE64_SOURCE
+#endif
+
+#ifndef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+
+
 typedef struct sockaddr_in sockaddr_in_t;
 typedef struct sockaddr sockaddr_t;
 
 void bzero(void* dst, size_t len);
+void bone(void* dst, size_t len);
 
 //socket
 int Socket(int family, int type, int protocol);
@@ -42,5 +52,7 @@ const char* Inet_ntop(int family, const void *addrptr, char *strptr, size_t len)
 void Mkdir(const char* path);
 
 bool Exist(const char* file_path);
+
+off_t File_size(const char* filename);
 
 #endif
