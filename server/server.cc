@@ -11,6 +11,7 @@ void server_init() {
 void server_main() {
     logger->info("server start");
     int listenfd, connfd;
+    int optval = 1;
     pid_t worker_pid;
     sockaddr_in_t server_addr, client_addr;
     socklen_t client_len;
@@ -23,11 +24,12 @@ void server_main() {
     Bind(listenfd, (sockaddr_t*)&server_addr, sizeof(server_addr));
 
     Listen(listenfd, 1024);
+    Setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void*)&optval, sizeof(int));
 
     while (true) {
         client_len = sizeof(client_addr);
         if ((connfd = accept(listenfd, (sockaddr_t*)&client_addr, &client_len)) < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR || errno == ECONNABORTED) continue;
             else {
                 logger->error("accept error");
                 exit(0);

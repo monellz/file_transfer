@@ -26,6 +26,14 @@ void Bind(int fd, const struct sockaddr *sa, socklen_t salen) {
     }
 }
 
+int Setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen) {
+    if (setsockopt(fd, level, optname, optval, optlen) < 0) {
+        logger->error("setsockopt error");
+        exit(0);
+    }
+}
+
+
 void Listen(int fd, int backlog) {
     if (listen(fd, backlog) < 0) {
         logger->error("listen error");

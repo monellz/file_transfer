@@ -1,1 +1,1 @@
-add_library(tools STATIC logger.cc wrap.cc)
+add_library(tools STATIC wrap.cc util.cc logger.cc)
