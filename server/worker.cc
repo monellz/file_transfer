@@ -15,6 +15,10 @@ void worker_main(int connfd, sockaddr_in_t* peer_addr, socklen_t* peer_len) {
     to.tv_usec = 0;
     Setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (const void*)&to, sizeof(to));
     Setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, (const void*)&to, sizeof(to));
+    struct linger so_linger;
+    so_linger.l_onoff = 1;
+    so_linger.l_linger = 60;
+    Setsockopt(connfd, SOL_SOCKET, SO_LINGER, (const void*)&so_linger, sizeof(so_linger));
     
 
     msg_t msg;
@@ -36,7 +40,15 @@ void worker_main(int connfd, sockaddr_in_t* peer_addr, socklen_t* peer_len) {
         };
     }
 
-    logger->info("worker finish");
+    if (close(connfd) < 0) {
+        if (errno == EWOULDBLOCK) {
+            logger->error("timeout before data sended and acked");
+        } else {
+            logger->error("close error: {}", strerror(errno));
+        }
+    } else {
+        logger->info("worker finish");
+    }
 }
 
 void upload_file(int connfd, msg_t& msg) {
@@ -55,14 +67,16 @@ void upload_file(int connfd, msg_t& msg) {
     if (exist) {
         logger->info("{} exist", file_path);
         current_file_len = File_size(file_path);
+    } else {
+        logger->info("{} not exist", file_path);
     }
 
-    if (!is_continue) {
+    if (is_continue && exist) {
+        fd = open(file_path, O_WRONLY | O_APPEND);
+    } else {
         current_file_len = 0;
         //create new file
         fd = open(file_path, O_WRONLY | O_CREAT, 0644);
-    } else {
-        fd = open(file_path, O_WRONLY | O_APPEND);
     }
 
     //send reply to client
@@ -95,7 +109,6 @@ void upload_file(int connfd, msg_t& msg) {
         //logger->info("msg.data read num: {}", nread);
         writen(fd, msg.data, nread);
     }
-    close(fd);
 }
 
 void download_file(int connfd, msg_t& msg) {
@@ -161,6 +174,5 @@ void download_file(int connfd, msg_t& msg) {
         write_msg(connfd, msg);
         logger->info("downloading {}...{}/{}", file_name, file_len - left, file_len); 
     }
-    close(fd);
 }
 

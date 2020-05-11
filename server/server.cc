@@ -6,6 +6,7 @@ void server_init() {
 
     Mkdir("data");
     signal(SIGCHLD, sig_worker);
+    signal(SIGPIPE, SIG_IGN);
 }
 
 void server_main() {
@@ -21,15 +22,15 @@ void server_main() {
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(SERVER_PORT);
-    Bind(listenfd, (sockaddr_t*)&server_addr, sizeof(server_addr));
 
-    Listen(listenfd, 1024);
     Setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void*)&optval, sizeof(int));
+    Bind(listenfd, (sockaddr_t*)&server_addr, sizeof(server_addr));
+    Listen(listenfd, 1024);
 
     while (true) {
         client_len = sizeof(client_addr);
         if ((connfd = accept(listenfd, (sockaddr_t*)&client_addr, &client_len)) < 0) {
-            if (errno == EINTR || errno == ECONNABORTED) continue;
+            if (errno == EINTR || errno == ECONNABORTED || errno == EHOSTUNREACH) continue;
             else {
                 logger->error("accept error");
                 exit(0);

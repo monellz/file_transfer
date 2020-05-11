@@ -34,8 +34,8 @@ void send_file(int sockfd, const char* file_name, unsigned int is_continue) {
             break;
         };
         case UploadRespondErr: {
-            sscanf(msg.data, "%ld %s", &current_file_len, message);
-            logger->error("UploadRespondErr, current_file_len: {}, msg: {}", current_file_len, message);
+            sscanf(msg.data, "%s", message);
+            logger->error("UploadRespondErr, msg: {}", message);
             exit(0);
         };
         default: {
